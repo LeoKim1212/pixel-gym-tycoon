@@ -86,6 +86,7 @@
     #feverBarFill { position: relative; }
     #feverBarFill::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 5px, rgba(0,0,0,0.4) 5px 6px); }
     .qty-btn { box-shadow: inset -2px -2px 0 rgba(0,0,0,0.6), inset 2px 2px 0 rgba(255,255,255,0.22); }
+    .pxi { display: inline-block; width: 1.2em; height: 1.2em; vertical-align: -0.25em; image-rendering: pixelated; object-fit: contain; flex-shrink: 0; }
     @keyframes hudPop { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
     /* ===== Mobile / Touch Optimization ===== */
     html {
@@ -294,7 +295,7 @@
     <section id="simulatorContainer" class="flex-1 min-h-[360px] h-[420px] sm:h-[480px] lg:h-[540px] flex flex-col bg-[#090d16] border-2 border-slate-800 rounded-lg overflow-hidden relative shadow-inner shrink-0 lg:shrink transition-all duration-300">
       
       <!-- Top Overlay Bar -->
-      <div class="absolute top-2 left-2 z-10 flex items-center gap-2 pointer-events-none">
+      <div class="shrink-0 w-full h-9 flex items-center gap-2 px-2 overflow-hidden bg-[#0d1424] border-b-2 border-slate-800 z-10 pointer-events-none">
         <span id="gymTitleOverlay" class="text-xs bg-black/85 backdrop-blur-sm text-amber-400 px-2.5 py-1 rounded border border-amber-500/40 font-bold">
           🏢 지하 쇠맛터
         </span>
@@ -307,7 +308,7 @@
       </div>
 
       <!-- Disaster Warning Banner Overlay -->
-      <div id="disasterBanner" class="hidden absolute top-12 left-1/2 -translate-x-1/2 z-20 bg-rose-950/95 border-2 border-rose-500 text-rose-200 px-4 py-2 rounded-lg shadow-2xl flex items-center gap-2 text-xs font-bold animate-bounce pointer-events-none">
+      <div id="disasterBanner" class="hidden absolute top-11 left-1/2 -translate-x-1/2 z-20 bg-rose-950/95 border-2 border-rose-500 text-rose-200 px-4 py-2 rounded-lg shadow-2xl flex items-center gap-2 text-xs font-bold animate-bounce pointer-events-none">
         <span class="text-lg">🚨</span>
         <span id="disasterBannerText">돌발 재난 발생!</span>
       </div>
@@ -438,6 +439,162 @@
   </div>
 
   <script>
+    // ===== 픽셀 아이콘 엔진: 이모지를 픽셀아트 스프라이트로 자동 교체 (실패해도 게임은 그대로 동작) =====
+    (function pixelIcons() {
+      try {
+        const PAL = { k:'#0f172a', w:'#f8fafc', a:'#cbd5e1', b:'#64748b', y:'#fbbf24', Y:'#fef3c7', o:'#f97316', r:'#ef4444', R:'#991b1b', g:'#22c55e', G:'#15803d', c:'#38bdf8', C:'#0369a1', p:'#f472b6', P:'#a855f7', n:'#b45309', s:'#fed7aa', t:'#14b8a6', d:'#1e293b' };
+        const DEF = {
+  wind:'......../.aaaaa../.....a../aaaaaa../.....a../.aaaaa../......../........',thumb:'...ss.../...ss.../..sss.../sssssss./sssssss./sssssss./sssssss./.sssss..',drop:'...c..../...c..../..ccc.../..ccc.../.ccwcc../.ccccc../..ccc.../........',gear:'...b.b../.bbbbb../.bbwbb../bbwkwbb./.bbwbb../.bbbbb../..b.b.../........',
+  dumbbell:'......../.aa..aa./aaa..aaa/aaaaaaaa/bbbbbbbb/bbb..bbb/.bb..bb./........',
+  coin:'..oooo../.oyyyyo./oyyYyyyo/oyyYyyyo/oyyyyyyo/oyyyyyyo/.oyyyyo./..oooo..',
+  bolt:'....yy../...yy.../..yy..../.yyyyyy./....yy../...yy.../..y...../........',
+  scroll:'.nnnnnn./nYYYYYYn/.YkkkkY./.YYYYYY./.YkkkkY./.YYYYYY./nYYYYYYn/.nnnnnn.',
+  refresh:'..rrrr../.r....r./r.....rr/r....rrr/r......./.r....r./..rrrr../........',
+  fullscreen:'www..www/w......w/w......w/......../......../w......w/w......w/www..www',
+  spk_on:'...w..../..ww..w./www.w..w/www.w.w./www.w..w/..ww..w./...w..../........',
+  spk_off:'...w..../..ww.r.r/www..r../www.r.r./www...../..ww..../...w..../........',
+  flame:'...o..../..oo.o../.ooooo../.oyyoo.o/oyyyyoo./oyYYyyo./.oyyyo../..oooo..',
+  siren:'...rr.../..rwwr../..rwrr../.rrrrrr./.dddddd./dddddddd/......../........',
+  mega:'.....cc./....c..c/.yyyc..c/yyyyc..c/yyyyc..c/.yyyc..c/..y..cc./..y.....',
+  coach_kim:['..hhhh../.hhhhhh./.hssssh./.skssks./.ssssss./.sskkss./..xxxx../.xxxxxx.',{h:'d',x:'r'}],
+  coach_lee:['..hhhh../.hhhhhh./.hssssh./.skssks./.ssssss./.sskkss./..xxxx../.xxxxxx.',{h:'n',x:'t'}],
+  building:'.bbbbbb./.bybybb./.bbbbbb./.bybyby./.bbbbbb./.bybkyb./.bbbkbb./bbbbbbbb',
+  paper:'.wwwwww./.wkkkkw./.wwwwww./.wkkkkw./.wwwwww./.wkkkkw./.wwwwww./........',
+  timer:'..aaaa../.awwwwa./awwkwwwa/awwkkwwa/awwwwwwa/.awwwwa./..aaaa../........',
+  crown:'y..y..y./yy.yy.yy/yyyyyyyy/yyrYYryy/yyyyyyyy/.nnnnnn./......../........',
+  runner:'...ss.../..sss.../.cccc.../cccccc../.cccc.../.c..c.../c....c../........',
+  muscle:'....ss../...ssss./.ssssss./sssss.s./.ssss.../..ss..../......../........',
+  arm:'......../.aaaaa../.abbbaa./aabbbbaa/.abbbaa./.aaaaa../..a.a.../........',
+  leg:'..ss..../..ss..../..ss..../..ssss../..ssss../..sssss./.nnnnnn./........',
+  chain:'.b..b.../b.bb.b../b..b.b../.bb..b../..b.bb../.b..b.b./b.bb.b../.b..b...',
+  ladder:'a.....a./aaaaaaa./a.....a./aaaaaaa./a.....a./aaaaaaa./a.....a./aaaaaaa.',
+  rowing:'......../......cc/.....cc./bbbbbbb./.b.....b/.b.bbb.b/..b...b./........',
+  glove:'..rrrr../.rrrrrr./rrrrrrrr/rrrrrrrr/.rrrrrr./.rwwwwr./.wwwwww./........',
+  yoga:'...ss.../...ss.../..pppp../.pppppp./p.pppp.p/..pppp../.pp..pp./........',
+  shake:'.wwwwww./.cccccc./.cwwwwc./.cccccc./.cwwwwc./.cccccc./.cccccc./..cccc..',
+  ice:'..cccc../.cwcccc./cwccccCc/cccccCCc/ccccCCCc/.ccCCCc./..cCCc../........',
+  sauna:'..w..w../.w..w.../..w..w../nnnnnnnn/nyyyyyyn/nynnnnyn/nyyyyyyn/nnnnnnnn',
+  robot:'...cc.../..bbbb../.bwbbwb./.bbbbbb./..bkkb../.bbbbbb./.b....b./........',
+  acro:'...pp.../..ssss../..skks../.pppppp./pp.pp.pp/...pp.../..p..p../.p....p.',
+  lion:'n.nnnn.n/nnyyyynn/nyykkyyn/nyyyyyyn/nyynnyyn/nnyyyynn/.nnnnnn./........',
+  wave:'......../......../..cc..../.cwcc.c./cwcccccc/ccCcCcCc/CCCCCCCC/........',
+  boom:'y..y..y./.yoooy../..orro../yoryyroy/..orro../.yoooy../y..y..y./........',
+  thief:'..kkkk../.kssssk./.kkkkkk./kwkwkwkk/.kkkkkk./.kk..kk./.k....k./........',
+  warn:'...yy.../..yyyy../..ykky../.yykkyy./.yykkyy./yyyyyyyy/yyykkyyy/yyyyyyyy',
+  gift:'..r..r../.r.rr.r./rrrrrrrr/rrryyrrr/yyyyyyyy/rrryyrrr/rrryyrrr/rrrrrrrr',
+  shield:'bbbbbbbb/bccccccb/bccwcccb/bccwcccb/bcccccCb/.bcccCb./..bcCb../...bb...',
+  moon:'..yyyy../.yyY..../yyY...../yyY...../yyY...../.yyY..yy/..yyyyy./........',
+  disk:'bbbbbbb./bakkkab./bakkkab./bbbbbbb./bwwwwwb./bwkwwwb./bwwwwwb./bbbbbbb.',
+  sparkle:'...y..../...y..../..yYy.../yyYwYyy./..yYy.../...y..../...y..../........',
+  up:'...yy.../..yyyy../.yyyyyy./yyyyyyyy/...yy.../...yy.../...yy.../...yy...',
+  spy:'..kkkk../.kkkkkk./.ssssss./.skkkks./.ssssss./..dddd../.dddddd./.dddddd.',
+  clipboard:'.bbbbbb./bwwwwwwb/bwkkkkwb/bwwwwwwb/bwkkkkwb/bwwwwwwb/bwkkwwwb/bbbbbbbb',
+  sweat:'...c..../...cc.../..cccc../..cwcc../..cccc../...cc.../......../........',
+  scared:'.yyyyyy./yyyyyyyy/ywkyykwy/yyyyyyyy/yyykkyyy/yyykkyyy/.yyyyyy./..yyyy..',
+  angry:'.yyyyyy./yyyyyyyy/yrkyykry/yykyykyy/yyyyyyyy/yykkkkyy/.yyyyyy./..yyyy..',
+  hearts:'.rr..rr./rrrrrrrr/rrrrrrrr/rrrrrrrr/.rrrrrr./..rrrr../...rr.../........',
+  sun:'o..o..o./.oyyyyo./.yyyyyy./oyyyyyyo/.yyyyyy./.oyyyyo./o..o..o./........',
+  trophy:'yyyyyyyy/y.yyyy.y/y.yyyy.y/.yyyyyy./..yyyy../...yy.../..yyyy../.nnnnnn.',
+  globe:'..cccc../.cgcccc./cggcccgc/cgcccggc/ccccgggc/.cccggc./..cccc../........',
+  herb:'......gg/....gGg./..ggGg../.gGgg.../gGg...../G......./......../........',
+  rocket:'....ww../...wwww./...wcww./...wwww./..rwwwwr/..r.ww.r/....oo../...oyyo.',
+  lock:'..bbbb../.b....b./.b....b./yyyyyyyy/yyykkyyy/yyykkyyy/yyyyyyyy/yyyyyyyy',
+  star:'...y..../..yyy.../yyyyyyy./.yyyyy../.yyyyy../.yy.yy../.y...y../........'
+};
+        const SPR = {}, URLS = {};
+        function mk(rows, remap) {
+          const g = rows.split('/').map(r => [...r].map(ch => PAL[(remap && remap[ch]) || ch] || null));
+          const c = document.createElement('canvas'); c.width = c.height = 10;
+          const x = c.getContext('2d');
+          x.fillStyle = '#0b1020';
+          g.forEach((r, j) => r.forEach((col, i) => { if (col) [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx, dy]) => x.fillRect(i + 1 + dx, j + 1 + dy, 1, 1)); }));
+          g.forEach((r, j) => r.forEach((col, i) => { if (col) { x.fillStyle = col; x.fillRect(i + 1, j + 1, 1, 1); } }));
+          return c;
+        }
+        Object.keys(DEF).forEach(n => {
+          const v = DEF[n], arr = Array.isArray(v) ? v : [v];
+          SPR[n] = mk(arr[0], arr[1]); URLS[n] = SPR[n].toDataURL();
+        });
+        const EMO = {};
+        [['1F3CB','dumbbell'],['1FA99','coin'],['26A1','bolt'],['1F4DC','scroll'],['1F504','refresh'],['26F6','fullscreen'],['1F50A','spk_on'],['1F507','spk_off'],['1F525','flame'],['1F6A8','siren'],['1F4E2','mega'],['1F468 200D 1F3EB','coach_kim'],['1F469 200D 1F3EB','coach_lee'],['1F3E2','building'],['1F4C4','paper'],['23F1','timer'],['1F451','crown'],['1F3C3','runner'],['1F4AA','muscle'],['1F9BE','arm'],['1F9B5','leg'],['1F9BF','leg'],['26D3','chain'],['1FA9C','ladder'],['1F6A3','rowing'],['1F94A','glove'],['1F9D8','yoga'],['1F964','shake'],['1F9CA','ice'],['2744','ice'],['1F9D6','sauna'],['1F916','robot'],['1F938 200D 2640','acro'],['1F981','lion'],['1F30A','wave'],['1F4A5','boom'],['1F9B9','thief'],['26A0','warn'],['1F381','gift'],['1F389','sparkle'],['1F6E1','shield'],['1F319','moon'],['1F4BE','disk'],['2728','sparkle'],['2B06','up'],['1F575','spy'],['1F4CB','clipboard'],['1F4A6','sweat'],['1F631','scared'],['1F624','angry'],['1F495','hearts'],['2600','sun'],['1F3C6','trophy'],['1F310','globe'],['1F33F','herb'],['1F30D','globe'],['1F680','rocket'],['1F512','lock'],['1F4A8','wind'],['1F44D','thumb'],['1F4A7','drop'],['2699','gear']]
+          .forEach(([hex, name]) => { EMO[String.fromCodePoint(...hex.split(' ').map(h => parseInt(h, 16)))] = name; });
+        const RE = /\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic}\uFE0F?)*/gu;
+        const TEST = /\p{Extended_Pictographic}/u;
+        function nameOf(seq) {
+          const k = seq.replace(/\uFE0F/g, '');
+          return EMO[k] || EMO[String.fromCodePoint(k.codePointAt(0))] || null;
+        }
+        function parts(t) {
+          const out = []; let last = 0, m; RE.lastIndex = 0;
+          while ((m = RE.exec(t))) {
+            if (m.index > last) out.push({ t: t.slice(last, m.index) });
+            const nm = nameOf(m[0]);
+            out.push(nm ? { ico: nm } : { t: m[0] });
+            last = m.index + m[0].length;
+          }
+          if (last < t.length) out.push({ t: t.slice(last) });
+          return out;
+        }
+
+        // --- DOM: 텍스트 속 이모지를 <img> 픽셀 아이콘으로 ---
+        function pxifyNode(root) {
+          if (!root) return;
+          const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n =>
+            (n.parentNode && /^(SCRIPT|STYLE)$/.test(n.parentNode.tagName)) ? NodeFilter.FILTER_REJECT :
+            (TEST.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT) });
+          const list = [];
+          while (tw.nextNode()) list.push(tw.currentNode);
+          list.forEach(n => {
+            const ps = parts(n.nodeValue);
+            if (!ps.some(q => q.ico)) return;
+            const frag = document.createDocumentFragment();
+            ps.forEach(q => {
+              if (q.ico) { const im = new Image(); im.className = 'pxi'; im.alt = ''; im.src = URLS[q.ico]; frag.appendChild(im); }
+              else frag.appendChild(document.createTextNode(q.t));
+            });
+            n.parentNode.replaceChild(frag, n);
+          });
+        }
+        pxifyNode(document.body);
+        new MutationObserver(ms => ms.forEach(m => {
+          if (m.type === 'characterData') pxifyNode(m.target.parentNode);
+          else m.addedNodes.forEach(n => { if (n.nodeType === 1) pxifyNode(n); else if (n.nodeType === 3 && n.parentNode) pxifyNode(n.parentNode); });
+        })).observe(document.body, { childList: true, characterData: true, subtree: true });
+
+        // --- Canvas: fillText / strokeText / measureText 가 이모지를 스프라이트로 그림 ---
+        const proto = CanvasRenderingContext2D.prototype;
+        const _fill = proto.fillText, _stroke = proto.strokeText, _meas = proto.measureText;
+        function fontPx(c) { const m = /(\d+(?:\.\d+)?)px/.exec(c.font); return m ? parseFloat(m[1]) : 12; }
+        function isz(c) { return 10 * Math.max(1, Math.round(fontPx(c) * 1.2 / 10)); }
+        function layout(c, text) {
+          const ps = parts(text), z = isz(c); let w = 0;
+          ps.forEach(q => { q.w = q.ico ? z + 1 : _meas.call(c, q.t).width; w += q.w; });
+          return { ps, z, w };
+        }
+        function rich(c, orig, text, x, y, isFill) {
+          const L = layout(c, text), al = c.textAlign;
+          let cx = al === 'center' ? x - L.w / 2 : (al === 'right' || al === 'end') ? x - L.w : x;
+          c.textAlign = 'left';
+          L.ps.forEach(q => {
+            if (q.ico) {
+              if (isFill) {
+                const was = c.imageSmoothingEnabled; c.imageSmoothingEnabled = false;
+                c.drawImage(SPR[q.ico], Math.round(cx), Math.round(y - L.z * 0.85), L.z, L.z);
+                c.imageSmoothingEnabled = was;
+              }
+            } else orig.call(c, q.t, cx, y);
+            cx += q.w;
+          });
+          c.textAlign = al;
+        }
+        proto.fillText = function (t, x, y, mw) { return (typeof t === 'string' && TEST.test(t)) ? rich(this, _fill, t, x, y, true) : _fill.call(this, t, x, y, mw); };
+        proto.strokeText = function (t, x, y, mw) { return (typeof t === 'string' && TEST.test(t)) ? rich(this, _stroke, t, x, y, false) : _stroke.call(this, t, x, y, mw); };
+        proto.measureText = function (t) { return (typeof t === 'string' && TEST.test(t)) ? { width: layout(this, t).w } : _meas.call(this, t); };
+      } catch (err) {
+        console.warn('픽셀 아이콘 엔진을 사용할 수 없어 기본 표시로 동작합니다.', err);
+      }
+    })();
+
     // 숫자 포맷터: 10,000 미만은 정수 콤마, 그 이상은 K, M, B, T, Qa, Qi로 축약
     function formatNumber(num) {
       if (num === null || num === undefined || isNaN(num)) return '0';
@@ -1708,8 +1865,8 @@
       }
 
       // Water Purifier & Cup Station Prop (헬스장 필수 아이템 정수기)
-      const coolerX = canvasW - 28;
-      const coolerY = wallH + 18;
+      const coolerX = Math.round(canvasW * 0.9) - 7;
+      const coolerY = wallH - 28;
       ctx.fillStyle = '#e2e8f0';
       ctx.fillRect(coolerX, coolerY, 14, 26);
       ctx.fillStyle = '#0284c7';
@@ -2615,14 +2772,15 @@
 
       playSfx('coin');
 
-      const clickX = e && e.clientX ? e.clientX : canvasW * 0.5;
-      const clickY = e && e.clientY ? e.clientY : canvasH * 0.5;
       const rect = canvas.getBoundingClientRect();
-      const localX = Math.max(30, Math.min(canvasW - 30, clickX - rect.left));
-      const localY = Math.max(30, Math.min(canvasH - 30, clickY - rect.top));
+      const hasPt = e && typeof e.clientX === 'number' && e.clientX > 0;
+      const inside = hasPt && e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
+      const localX = inside ? e.clientX - rect.left : 74;
+      const localY = inside ? e.clientY - rect.top : canvasH - 74;
       addFloatingText(localX, localY, `+${formatNumber(power)}G`, GymState.feverActive ? '#ef4444' : '#fbbf24');
       burst(localX, localY, 8, { ramp: GymState.feverActive ? RAMPS.fire : RAMPS.gold, glow: true, speed: 2.6, g: 0.1, size: 3 });
       ring(localX, localY, GymState.feverActive ? '#f97316' : '#fde68a', 26);
+      if (!inside) throwFlyers(localX, localY);
       const hg = document.getElementById('hudGold');
       if (hg) { hg.style.animation = 'none'; void hg.offsetWidth; hg.style.animation = 'hudPop 0.18s ease-out'; }
 
@@ -2844,6 +3002,9 @@
         } else if (p.shape === 'coin') {
           pxX.fillStyle = '#d97706'; pxX.fillRect(ix, iy, 2, 2);
           pxX.fillStyle = '#fde68a'; pxX.fillRect(ix, iy, 1, 1);
+        } else if (p.shape === 'paper') {
+          pxX.fillStyle = '#e2e8f0'; pxX.fillRect(ix, iy, 3, 2);
+          pxX.fillStyle = '#f87171'; pxX.fillRect(ix, iy, 1, 1);
         } else if (p.shape === 'drop') {
           pxX.fillStyle = col; pxX.fillRect(ix, iy, 1, 2);
         } else {
@@ -2859,6 +3020,10 @@
         ctx.font = `${p.size}px sans-serif`; ctx.textAlign = 'center'; ctx.fillText(p.ch, p.x, p.y);
       });
       ctx.restore();
+    }
+
+    function throwFlyers(x, y) {
+      for (let i = 0; i < 6; i++) spawnP({ x, y: y - 10, vx: 1.5 + Math.random() * 2.2, vy: -1.5 - Math.random() * 2, g: 0.07, decay: 0.014, size: 3, shape: 'paper', vr: (Math.random() - 0.5) * 0.3 });
     }
 
     // ---- 황금 프로틴 (클릭 보너스 이벤트) ----
