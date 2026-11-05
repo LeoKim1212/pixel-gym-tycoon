@@ -91,8 +91,20 @@
       html, body { height: 100vh; height: 100dvh; overflow: hidden !important; }
       body { min-height: 0 !important; }
       main { flex: 1 1 0% !important; min-height: 0 !important; overflow: hidden !important; padding-bottom: 0.5rem !important; }
-      #simulatorContainer { flex: 0 0 auto !important; height: clamp(240px, 44dvh, 420px) !important; min-height: 0 !important; }
-      #canvasWrapper { min-height: 0 !important; }
+      #simulatorContainer { flex: 0 0 auto !important; height: var(--simH, 300px) !important; min-height: 0 !important; }
+      #canvasWrapper { flex: 1 1 0% !important; height: auto !important; min-height: 0 !important; }
+      #topStrip { height: 28px !important; }
+      #topStrip > span { padding-top: 2px !important; padding-bottom: 2px !important; }
+      #feverBarWrap { padding-top: 2px !important; padding-bottom: 2px !important; }
+      #flyerBar { padding: 4px 8px !important; }
+      #flyerBar p, #flyerBar > div > div:first-child { display: none !important; }
+      #crisisBar { top: 32px !important; padding: 2px 6px !important; }
+      @media (max-height: 560px) {
+        html, body { height: auto !important; overflow: auto !important; }
+        main { overflow: visible !important; }
+        main > aside { overflow: visible !important; }
+        #simulatorContainer { position: sticky; top: 48px; z-index: 25; }
+      }
       main > aside { flex: 1 1 0% !important; min-height: 0 !important; overflow-y: auto !important; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
       #tabContainer { flex: none !important; max-height: none !important; min-height: 0 !important; overflow: visible !important; }
     }
@@ -335,13 +347,14 @@ aside, #simulatorContainer { border: 3px solid #000 !important; border-radius: 0
     <section id="simulatorContainer" class="flex-1 min-h-[360px] h-[420px] sm:h-[480px] lg:h-[540px] flex flex-col bg-[#090d16] border-2 border-slate-800 rounded-lg overflow-hidden relative shadow-inner shrink-0 lg:shrink transition-all duration-300">
       
       <!-- Top Overlay Bar -->
-      <div class="shrink-0 w-full h-9 flex items-center gap-2 px-2 overflow-hidden bg-[#0d1424] border-b-2 border-slate-800 z-10 pointer-events-none">
+      <div id="topStrip" class="shrink-0 w-full h-9 flex items-center gap-2 px-2 overflow-hidden bg-[#0d1424] border-b-2 border-slate-800 z-10 pointer-events-none">
         <span id="gymTitleOverlay" class="text-xs bg-black/85 backdrop-blur-sm text-amber-400 px-2.5 py-1 rounded border border-amber-500/40 font-bold">
           🏢 지하 쇠맛터
         </span>
         <span class="text-[11px] bg-black/85 text-slate-200 px-2.5 py-1 rounded border border-slate-700">
           회원: <span id="overlayMemberCount" class="text-cyan-400 font-bold font-mono">0</span>/<span id="overlayMaxMemberCount" class="text-slate-300 font-mono">15</span>명
         </span>
+        <button id="btnViewSize" type="button" class="lg:hidden pointer-events-auto ml-auto shrink-0 pixel-btn px-2 py-0.5 text-[10px] bg-slate-700 text-slate-100 rounded border border-slate-500">화면: 보통</button>
         <span id="feverBadge" class="hidden text-[11px] bg-rose-600 text-amber-200 px-2.5 py-1 rounded border border-amber-300 font-black animate-pulse">
           🔥 부스터 피버 발동 중! (1.7배)
         </span>
@@ -362,7 +375,7 @@ aside, #simulatorContainer { border: 3px solid #000 !important; border-radius: 0
       </div>
 
       <!-- Pre-Workout Booster Energy Bar -->
-      <div class="w-full bg-[#080c18] px-2.5 py-1 border-t border-slate-800 flex items-center gap-2">
+      <div id="feverBarWrap" class="w-full bg-[#080c18] px-2.5 py-1 border-t border-slate-800 flex items-center gap-2">
         <span class="text-[10px] font-bold text-amber-400 whitespace-nowrap">⚡ 부스터 게이지</span>
         <div class="flex-1 bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-700 relative">
           <div id="feverBarFill" class="h-full bg-gradient-to-r from-amber-500 via-rose-500 to-amber-400 transition-all duration-100" style="width: 0%;"></div>
@@ -371,7 +384,7 @@ aside, #simulatorContainer { border: 3px solid #000 !important; border-radius: 0
       </div>
 
       <!-- Live Dynamic Flyer Promotion Bar -->
-      <div class="shrink-0 bg-[#0d1424] border-t-2 border-slate-800 p-2 sm:p-2.5 flex items-center justify-between gap-2 z-10">
+      <div id="flyerBar" class="shrink-0 bg-[#0d1424] border-t-2 border-slate-800 p-2 sm:p-2.5 flex items-center justify-between gap-2 z-10">
         <div class="flex items-center gap-2 min-w-0">
           <div class="w-8 h-8 bg-amber-500/20 text-amber-400 rounded flex items-center justify-center text-base border border-amber-500/40 shrink-0">
             📢
@@ -1473,7 +1486,7 @@ window.GA = (function () {
     console.warn('[GA]', where, err);
     if (where.indexOf('fx') === 0) { if (GA.errors > 6) GA.fxFail = true; }
     else if (GA.errors > 3) GA.fail = true;       // 반복 실패 → 레거시 렌더러로 영구 복귀
-    try { ctx.setTransform((Math.min(window.devicePixelRatio || 1, 2)), 0, 0, (Math.min(window.devicePixelRatio || 1, 2)), 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.imageSmoothingEnabled = false; } catch (e) { }
+    try { if (window.__resetCtxTransform) window.__resetCtxTransform(); else ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.imageSmoothingEnabled = false; } catch (e) { }
   };
 
   // ------------------------------------------------------------ 픽셀 UI 헬퍼
@@ -1888,6 +1901,7 @@ window.GA = (function () {
     const STORAGE_KEY = 'pixel_gym_tycoon_save_v2';
     let pendingOffline = 0;
     let saveWarned = false;
+    let isResetting = false;   // 초기화 중에는 어떤 저장도 하지 않음
     let saveFlashTimer = null;
 
     function flashSaved() {
@@ -2241,6 +2255,7 @@ window.GA = (function () {
     }
 
     function saveGame() {
+      if (isResetting) return;
       try {
         const payload = {
           gold: clampNum(GymState.gold),
@@ -2351,21 +2366,31 @@ window.GA = (function () {
     let canvasW = 800;
     let canvasH = 460;
 
+    const VLW = 480, VLH = 340;   // 모바일 가상 해상도 (이 크기로 그린 뒤 화면에 맞춰 축소)
     function resizeCanvas() {
       const wrapper = document.getElementById('canvasWrapper');
       if (!wrapper) return;
       const rect = wrapper.getBoundingClientRect();
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-      const availableW = Math.floor(rect.width || wrapper.clientWidth || 800);
-      const availableH = Math.floor(rect.height || wrapper.clientHeight || 460);
-      // Keep the internal canvas coordinate system aligned with the actual CSS size on small phones.
-      canvasW = Math.max(280, availableW);
-      canvasH = Math.max(240, availableH);
-
-      canvas.width = canvasW * dpr;
-      canvas.height = canvasH * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (window.matchMedia('(max-width: 1023px)').matches) {
+        const ww = Math.max(80, Math.floor(rect.width)), wh = Math.max(80, Math.floor(rect.height));
+        const sc = Math.min(ww / VLW, wh / VLH);
+        const cw = Math.max(40, Math.floor(VLW * sc)), ch = Math.max(30, Math.floor(VLH * sc));
+        canvasW = VLW; canvasH = VLH;
+        canvas.style.width = cw + 'px'; canvas.style.height = ch + 'px';
+        canvas.width = Math.round(cw * dpr); canvas.height = Math.round(ch * dpr);
+        window.__ctxScale = [canvas.width / VLW, canvas.height / VLH];
+      } else {
+        const availableW = Math.floor(rect.width || wrapper.clientWidth || 800);
+        const availableH = Math.floor(rect.height || wrapper.clientHeight || 460);
+        canvasW = Math.max(280, availableW);
+        canvasH = Math.max(240, availableH);
+        canvas.style.width = ''; canvas.style.height = '';
+        canvas.width = canvasW * dpr; canvas.height = canvasH * dpr;
+        window.__ctxScale = [dpr, dpr];
+      }
+      window.__resetCtxTransform = () => ctx.setTransform(window.__ctxScale[0], 0, 0, window.__ctxScale[1], 0, 0);
+      window.__resetCtxTransform();
       ctx.imageSmoothingEnabled = false;
     }
 
@@ -2373,6 +2398,25 @@ window.GA = (function () {
     const resizeObserver = new ResizeObserver(() => resizeCanvas());
     const wrapperEl = document.getElementById('canvasWrapper');
     if (wrapperEl) resizeObserver.observe(wrapperEl);
+
+    // ---- 모바일 화면 크기 (작게/보통/크게) ----
+    const VIEW_PRESETS = [{ n: '작게', h: 38 }, { n: '보통', h: 48 }, { n: '크게', h: 58 }];
+    let viewIdx = 1;
+    try { const v = parseInt(localStorage.getItem('pixel_gym_view_v1'), 10); if (v >= 0 && v < 3) viewIdx = v; } catch (e) {}
+    function applyViewSize() {
+      const px = Math.max(220, Math.round(window.innerHeight * VIEW_PRESETS[viewIdx].h / 100));
+      document.documentElement.style.setProperty('--simH', px + 'px');
+      const b = document.getElementById('btnViewSize');
+      if (b) b.textContent = '화면: ' + VIEW_PRESETS[viewIdx].n;
+    }
+    applyViewSize();
+    window.addEventListener('resize', applyViewSize);
+    const btnView = document.getElementById('btnViewSize');
+    if (btnView) btnView.addEventListener('click', () => {
+      viewIdx = (viewIdx + 1) % VIEW_PRESETS.length;
+      applyViewSize();
+      try { localStorage.setItem('pixel_gym_view_v1', String(viewIdx)); } catch (e) {}
+    });
 
     const floatingTexts = [];
     function addFloatingText(x, y, text, color = '#facc15') {
@@ -3995,8 +4039,8 @@ window.GA = (function () {
       const rect = canvas.getBoundingClientRect();
       const hasPt = e && typeof e.clientX === 'number' && e.clientX > 0;
       const inside = hasPt && e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
-      const localX = inside ? e.clientX - rect.left : 74;
-      const localY = inside ? e.clientY - rect.top : canvasH - 74;
+      const localX = inside ? (e.clientX - rect.left) * canvasW / (rect.width || canvasW) : 74;
+      const localY = inside ? (e.clientY - rect.top) * canvasH / (rect.height || canvasH) : canvasH - 74;
       addFloatingText(localX, localY, `+${formatNumber(power)}G`, GymState.feverActive ? '#ef4444' : '#fbbf24');
       burst(localX, localY, 8, { ramp: GymState.feverActive ? RAMPS.fire : RAMPS.gold, glow: true, speed: 2.6, g: 0.1, size: 3 });
       ring(localX, localY, GymState.feverActive ? '#f97316' : '#fde68a', 26);
@@ -4048,7 +4092,9 @@ window.GA = (function () {
       resetModal.classList.add('hidden');
     });
     document.getElementById('btnConfirmReset').addEventListener('click', () => {
-      localStorage.removeItem(STORAGE_KEY);
+      isResetting = true;
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+      try { sessionStorage.clear(); } catch (e) {}
       location.reload();
     });
 
@@ -4320,7 +4366,8 @@ window.GA = (function () {
     function onCanvasClick(e) {
       if (goldenItem) {
         const rect = canvas.getBoundingClientRect();
-        if (Math.hypot(e.clientX - rect.left - goldenItem.x, e.clientY - rect.top - goldenItem.y) < 36) { collectGolden(); return; }
+        const gs = (rect.width || canvasW) / canvasW;
+        if (Math.hypot((e.clientX - rect.left) / gs - goldenItem.x, (e.clientY - rect.top) / gs - goldenItem.y) < Math.max(36, 28 / gs)) { collectGolden(); return; }
       }
       triggerFlyerClick(e);
     }
